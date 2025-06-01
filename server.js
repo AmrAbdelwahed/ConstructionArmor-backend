@@ -60,7 +60,7 @@ app.use('/api/submit-construction-worker', limiter); // Add rate limiting for co
 app.use(express.json({ limit: '10kb' })); // Body parser with size limit
 
 // Email transporter configuration
-const transporter = nodemailer.createTransport({
+const transporter = nodemailer.createTransporter({
     host: 'mail.spacemail.com', // Replace with the actual SMTP host for spacemail
     port: 465, // Replace with the actual port for spacemail
     secure: true, // true for 465, false for other ports
@@ -93,6 +93,8 @@ const validateConstructionWorkerRequest = [
     body('email').trim().isEmail().withMessage('Valid email is required')
         .normalizeEmail(),
     body('phone').trim().matches(/^\+?[\d\s-]{10,}$/).withMessage('Valid phone number is required'),
+    body('city').trim().notEmpty().withMessage('City is required')
+        .isLength({ min: 2, max: 100 }).withMessage('City must be between 2 and 100 characters'),
     body('specialtyCategory').trim().notEmpty().withMessage('Specialty category is required'),
     body('specialtySubcategory').trim().notEmpty().withMessage('Specialty subcategory is required'),
     body('yearsOfExperience').trim().notEmpty().withMessage('Years of experience is required'),
@@ -124,7 +126,7 @@ app.post('/api/submit-construction-worker', validateConstructionWorkerRequest, a
         }
 
         const { 
-            firstName, lastName, email, phone, 
+            firstName, lastName, email, phone, city,
             specialtyCategory, specialtySubcategory, 
             yearsOfExperience, details 
         } = req.body;
@@ -150,11 +152,12 @@ app.post('/api/submit-construction-worker', validateConstructionWorkerRequest, a
             replyTo: email,
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2 style="color: #f47d23;">New Construction Worker Application</h2>
+                    <h2 style="color: #d11234;">New Construction Worker Application</h2>
                     <div style="background: #f5f5f5; padding: 20px; border-radius: 5px;">
                         <p><strong>Name:</strong> ${firstName} ${lastName}</p>
                         <p><strong>Email:</strong> ${email}</p>
                         <p><strong>Phone:</strong> ${phone}</p>
+                        <p><strong>City:</strong> ${city}</p>
                         <p><strong>Specialty Category:</strong> ${specialtyCategory} - ${categoryLabel}</p>
                         <p><strong>Specific Specialty:</strong> ${specialtySubcategory}</p>
                         <p><strong>Years of Experience:</strong> ${yearsOfExperience}</p>
@@ -172,13 +175,14 @@ app.post('/api/submit-construction-worker', validateConstructionWorkerRequest, a
             subject: 'Construction Worker Application Received',
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2 style="color: #f47d23;">Thank you for your application!</h2>
+                    <h2 style="color: #d11234;">Thank you for your application!</h2>
                     <p>Dear ${firstName} ${lastName},</p>
                     <div style="background: #f5f5f5; padding: 20px; border-radius: 5px;">
-                        <p>We have received your construction worker application and will review it shortly. 
+                        <p>We have received your construction worker application from ${city} and will review it shortly. 
                            Our team will contact you within 2-3 business days.</p>
                         
                         <h3>Application Summary:</h3>
+                        <p><strong>Location:</strong> ${city}</p>
                         <p><strong>Specialty:</strong> ${categoryLabel}</p>
                         <p><strong>Specific Area:</strong> ${specialtySubcategory}</p>
                         <p><strong>Experience:</strong> ${yearsOfExperience} years</p>
@@ -197,6 +201,7 @@ app.post('/api/submit-construction-worker', validateConstructionWorkerRequest, a
         logger.info('Construction worker application submitted successfully', {
             name: `${firstName} ${lastName}`,
             email: email,
+            city: city,
             specialty: specialtySubcategory,
             timestamp: new Date().toISOString()
         });
@@ -232,7 +237,7 @@ app.post('/api/submit-company', validateCompanyRequest, async (req, res, next) =
             replyTo: email,
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2 style="color: #f47d23;">New Construction Company Request</h2>
+                    <h2 style="color: #d11234;">New Construction Company Request</h2>
                     <div style="background: #f5f5f5; padding: 20px; border-radius: 5px;">
                         <p><strong>Company:</strong> ${companyName}</p>
                         <p><strong>Contact Person:</strong> ${firstName} ${lastName}</p>
@@ -254,7 +259,7 @@ app.post('/api/submit-company', validateCompanyRequest, async (req, res, next) =
             subject: 'Construction Service Request Received',
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2 style="color: #f47d23;">Thank you for your construction service request!</h2>
+                    <h2 style="color: #d11234;">Thank you for your construction service request!</h2>
                     <p>Dear ${firstName} ${lastName},</p>
                     <div style="background: #f5f5f5; padding: 20px; border-radius: 5px;">
                         <p>We have received your construction service request for ${companyName} and will review it shortly. 
