@@ -60,7 +60,7 @@ app.use('/api/submit-construction-worker', limiter); // Add rate limiting for co
 app.use(express.json({ limit: '10kb' })); // Body parser with size limit
 
 // Email transporter configuration
-const transporter = nodemailer.createTransporter({
+const transporter = nodemailer.createTransport({
     host: 'mail.spacemail.com', // Replace with the actual SMTP host for spacemail
     port: 465, // Replace with the actual port for spacemail
     secure: true, // true for 465, false for other ports
